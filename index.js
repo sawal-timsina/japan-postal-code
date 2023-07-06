@@ -34,11 +34,11 @@
 
 var jsonp = require('jsonp')
 
-JSONDATA = 'https://yubinbango.github.io/yubinbango-data/data';
-CACHE = [];
+var JSONDATA = 'https://yubinbango.github.io/yubinbango-data/data';
+var CACHE = [];
 
 
-PREFMAP = [
+var PREFMAP = [
     null,       '北海道',   '青森県',   '岩手県',   '宮城県',
     '秋田県',   '山形県',   '福島県',   '茨城県',   '栃木県',
     '群馬県',   '埼玉県',   '千葉県',   '東京都',   '神奈川県',
@@ -101,7 +101,7 @@ var parse = function(nzip, data, callback){
   });
 };
 
-fetchRemote = function (nzip, callback) {
+var fetchRemote = function (nzip, callback) {
   var zip3 = nzip.substr(0,3);
   var url = JSONDATA+'/'+zip3+'.js';
   jsonp(url, { name: '$yubin'}, function(error, data) {
