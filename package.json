@@ -1,6 +1,6 @@
 {
   "name": "japan-postal-code",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Japan postal code library",
   "main": "index.js",
   "repository": {
@@ -12,6 +12,7 @@
     "postal code"
   ],
   "author": "mzp",
+  "contributors": [ "yoshoku" ],
   "license": "MIT License",
   "bugs": {
     "url": "https://github.com/mzp/japan-postal-code/issues"
