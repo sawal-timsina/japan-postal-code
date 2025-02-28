@@ -32,82 +32,82 @@
     OTHER DEALINGS IN THE SOFTWARE.
 * ================================================================ */
 
-var jsonp = require('jsonp')
-
-var JSONDATA = 'https://yubinbango.github.io/yubinbango-data/data';
-var CACHE = [];
+const JSONDATA = 'https://yubinbango.github.io/yubinbango-data/data';
+const CACHE = [];
 
 
-var PREFMAP = [
-    null,       '北海道',   '青森県',   '岩手県',   '宮城県',
-    '秋田県',   '山形県',   '福島県',   '茨城県',   '栃木県',
-    '群馬県',   '埼玉県',   '千葉県',   '東京都',   '神奈川県',
-    '新潟県',   '富山県',   '石川県',   '福井県',   '山梨県',
-    '長野県',   '岐阜県',   '静岡県',   '愛知県',   '三重県',
-    '滋賀県',   '京都府',   '大阪府',   '兵庫県',   '奈良県',
-    '和歌山県', '鳥取県',   '島根県',   '岡山県',   '広島県',
-    '山口県',   '徳島県',   '香川県',   '愛媛県',   '高知県',
-    '福岡県',   '佐賀県',   '長崎県',   '熊本県',   '大分県',
-    '宮崎県',   '鹿児島県', '沖縄県'
+const PREFMAP = [
+    null, '北海道', '青森県', '岩手県', '宮城県',
+    '秋田県', '山形県', '福島県', '茨城県', '栃木県',
+    '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
+    '新潟県', '富山県', '石川県', '福井県', '山梨県',
+    '長野県', '岐阜県', '静岡県', '愛知県', '三重県',
+    '滋賀県', '京都府', '大阪府', '兵庫県', '奈良県',
+    '和歌山県', '鳥取県', '島根県', '岡山県', '広島県',
+    '山口県', '徳島県', '香川県', '愛媛県', '高知県',
+    '福岡県', '佐賀県', '長崎県', '熊本県', '大分県',
+    '宮崎県', '鹿児島県', '沖縄県'
 ];
 
 
-exports.get = function (zip_code, callback) {
-    // 郵便番号を数字のみ7桁取り出す
-    //    var zipoptimize = function(AjaxZip3.fzip1, AjaxZip3.fzip2){
-  var vzip = zip_code;
-  if (!vzip) return;
+const fetchRemote = async function (nzip) {
+    const zip3 = nzip.substr(0, 3);
+    const url = JSONDATA + '/' + zip3 + '.js';
 
-  // extract number only
-  var nzip = '';
-  for( var i=0;  i< vzip.length; i++ ) {
-    var chr = vzip.charCodeAt(i);
-    if ( chr < 48 ) continue;
-    if ( chr > 57 ) continue;
-    nzip += vzip.charAt(i);
-  }
-  if (nzip.length < 7 ) return;
-
-  // fetch from cache data using upper 3 digit
-  var zip3 = nzip.substr(0,3);
-  var data = CACHE[zip3];
-  if (data) return parse(nzip, data, callback);
-
-  // fetch by jsonp
-  fetchRemote(nzip, callback);
-};
-
-var parse = function(nzip, data, callback){
-  var array = data[nzip];
-  // Opera バグ対策：0x00800000 を超える添字は +0xff000000 されてしまう
-  var opera = (nzip-0+0xff000000)+"";
-  if ( ! array && data[opera] ) array = data[opera];
-  if ( ! array ) return;
-  var pref_id = array[0];                 // 都道府県ID
-  if ( ! pref_id ) return;
-  var jpref = PREFMAP[pref_id];  // 都道府県名
-  if ( ! jpref ) return;
-  var jcity = array[1];
-  if ( ! jcity ) jcity = '';              // 市区町村名
-  var jarea = array[2];
-  if ( ! jarea ) jarea = '';              // 町域名
-  var jstrt = array[3];
-  if ( ! jstrt ) jstrt = '';              // 番地
-  callback({
-    'prefecture': jpref,
-    'city': jcity,
-    'area': jarea,
-    'street': jstrt
-  });
-};
-
-var fetchRemote = function (nzip, callback) {
-  var zip3 = nzip.substr(0,3);
-  var url = JSONDATA+'/'+zip3+'.js';
-  jsonp(url, { name: '$yubin'}, function(error, data) {
-    if (!error) {
-      CACHE[zip3] = data;
-      parse(nzip, data, callback);
+    const res = await fetch(url);
+    if (!res.ok) {
+        return undefined
     }
-  });
+    let data = (await res.text()).replace("$yubin(", "").replace(");", "");
+    data = JSON.parse(data);
+    CACHE[zip3] = data;
+    return await parse(nzip, data)
+};
+
+const parse = async function (nzip, data) {
+    let array = data[nzip];
+    // Opera バグ対策：0x00800000 を超える添字は +0xff000000 されてしまう
+    const opera = (nzip - 0 + 0xff000000) + "";
+    if (!array && data[opera]) array = data[opera];
+    if (!array) return;
+    const pref_id = array[0];                 // 都道府県ID
+    if (!pref_id) return;
+    const jpref = PREFMAP[pref_id];  // 都道府県名
+    if (!jpref) return;
+    let jcity = array[1];
+    if (!jcity) jcity = '';              // 市区町村名
+    let jarea = array[2];
+    if (!jarea) jarea = '';              // 町域名
+    let jstrt = array[3];
+    if (!jstrt) jstrt = '';              // 番地
+
+    return {
+        'prefecture': jpref,
+        'city': jcity,
+        'area': jarea,
+        'street': jstrt
+    }
+};
+
+exports.get = async function (zip_code) {
+    const vzip = zip_code;
+    if (!vzip) return;
+
+    // extract number only
+    let nzip = '';
+    for (let i = 0; i < vzip.length; i++) {
+        const chr = vzip.charCodeAt(i);
+        if (chr < 48) continue;
+        if (chr > 57) continue;
+        nzip += vzip.charAt(i);
+    }
+    if (nzip.length < 7) return undefined;
+
+    // fetch from cache data using upper 3 digit
+    const zip3 = nzip.substr(0, 3);
+    const data = CACHE[zip3];
+    if (data) return await parse(nzip, data);
+
+    // fetch
+    return await fetchRemote(nzip);
 };
